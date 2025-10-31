@@ -36,6 +36,7 @@ export const PREFERENCE_ENDPOINTS = {
 
 // Other endpoints
 export const OTHER_ENDPOINTS = {
+  LEVELS: '/niveles',
   LANGUAGES: '/lenguajes',
   CATEGORIES: '/categorias',
   AUTHORS: '/autores',

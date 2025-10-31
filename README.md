@@ -1,21 +1,6 @@
-# React + TypeScript + Vite
+# BiblioTech - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-# Frontend - Ingeniería en Calidad
+Sistema inteligente de recomendación de libros técnicos con gestión de progreso de lectura.
 
 Aplicación web frontend desarrollada con React, TypeScript y Vite para el curso de Ingeniería en Calidad.
 
@@ -96,15 +81,18 @@ Frontend/
 │   │       ├── CTA.tsx
 │   │       └── Footer.tsx
 │   ├── pages/             # Páginas de la aplicación
-│   │   ├── LandingPage.tsx
-│   │   ├── LoginPage.tsx
-│   │   ├── RegisterPage.tsx
-│   │   └── HomePage.tsx
+│   │   ├── LandingPage.tsx      # Página de inicio pública
+│   │   ├── LoginPage.tsx        # Inicio de sesión
+│   │   ├── RegisterPage.tsx     # Registro de usuarios
+│   │   ├── OnboardingPage.tsx   # Configuración inicial de preferencias
+│   │   └── HomePage.tsx         # Dashboard principal
 │   ├── services/          # Servicios y lógica de negocio
-│   │   ├── api.ts         # Configuración de Axios
-│   │   └── authService.ts # Servicio de autenticación
+│   │   ├── api.ts               # Configuración de Axios
+│   │   ├── authService.ts       # Servicio de autenticación
+│   │   └── preferencesService.ts # Servicio de preferencias
 │   ├── types/             # Definiciones de TypeScript
-│   │   └── auth.ts
+│   │   ├── auth.ts              # Tipos para autenticación
+│   │   └── preferences.ts       # Tipos para preferencias
 │   ├── config/            # Configuraciones
 │   │   └── api.ts         # Configuración de API
 │   ├── utils/             # Utilidades y helpers
@@ -112,7 +100,6 @@ Frontend/
 │   ├── App.css            # Estilos globales
 │   ├── main.tsx           # Punto de entrada
 │   └── index.css          # Estilos base
-├── .github/               # Configuraciones de GitHub
 ├── index.html             # HTML principal
 ├── vite.config.ts         # Configuración de Vite
 ├── tsconfig.json          # Configuración de TypeScript
@@ -125,11 +112,30 @@ Frontend/
 - `/` - Landing Page (página de inicio pública)
 - `/login` - Página de inicio de sesión
 - `/register` - Página de registro
-- `/home` - Página principal (protegida, requiere autenticación)
+- `/onboarding` - Configuración inicial de preferencias (protegida)
+- `/home` - Dashboard principal (protegida, requiere autenticación y preferencias configuradas)
 
 ## 🔒 Rutas Protegidas
 
 Las rutas protegidas utilizan un componente `ProtectedRoute` que verifica la autenticación del usuario mediante el `authService`. Si el usuario no está autenticado, se redirige automáticamente a `/login`.
+
+## 🎯 Flujo de Onboarding
+
+Cuando un usuario inicia sesión por primera vez, se verifica si tiene preferencias configuradas:
+
+1. **Sin preferencias**: El usuario es redirigido a `/onboarding` para completar 3 pasos:
+
+   - **Paso 1**: Seleccionar nivel de experiencia (Principiante, Intermedio, Avanzado)
+   - **Paso 2**: Seleccionar lenguajes de programación de interés (mínimo 1)
+   - **Paso 3**: Seleccionar temas de interés (mínimo 1)
+
+2. **Con preferencias**: El usuario accede directamente al `/home`
+
+Los datos para el onboarding son obtenidos dinámicamente desde el backend:
+
+- Niveles desde `/niveles`
+- Lenguajes desde `/lenguajes`
+- Categorías desde `/categorias`
 
 ## 🎨 Componentes Principales
 
@@ -145,17 +151,19 @@ Las rutas protegidas utilizan un componente `ProtectedRoute` que verifica la aut
 
 ### Autenticación
 
-- **LoginPage**: Formulario de inicio de sesión
-- **RegisterPage**: Formulario de registro
-- **HomePage**: Dashboard principal para usuarios autenticados
+- **LoginPage**: Formulario de inicio de sesión con validación
+- **RegisterPage**: Formulario de registro con validación
+- **OnboardingPage**: Configuración de preferencias en 3 pasos con datos dinámicos
+- **HomePage**: Dashboard principal para usuarios autenticados con verificación de preferencias
 
 ## 🔌 API Configuration
 
 La configuración de la API se encuentra en:
 
-- `src/config/api.ts` - URLs base y configuración
-- `src/services/api.ts` - Instancia de Axios configurada
-- `src/services/authService.ts` - Métodos de autenticación
+- `src/config/api.ts` - URLs base y endpoints definidos
+- `src/services/api.ts` - Instancia de Axios configurada con interceptores
+- `src/services/authService.ts` - Métodos de autenticación (login, register, logout)
+- `src/services/preferencesService.ts` - Métodos para gestionar preferencias del usuario
 
 ## 🛠️ Scripts Disponibles
 
@@ -186,11 +194,39 @@ La configuración de la API se encuentra en:
 
 ## 🌐 Variables de Entorno
 
-Crear un archivo `.env` en la raíz del proyecto con:
+### Configuración Inicial
+
+1. Copiar el archivo de ejemplo:
+
+```bash
+# Windows
+copy .env.example .env
+
+# Linux/Mac
+cp .env.example .env
+```
+
+2. Editar `.env` con tus configuraciones:
 
 ```env
-VITE_API_URL=http://localhost:3000/api
+# Desarrollo local
+VITE_API_BASE_URL=http://localhost:8000
+
+# Producción (ejemplo)
+# VITE_API_BASE_URL=https://api.biblioficct.vercel.app
 ```
+
+### Variables Disponibles
+
+| Variable            | Descripción              | Valor por defecto       |
+| ------------------- | ------------------------ | ----------------------- |
+| `VITE_API_BASE_URL` | URL base del backend API | `http://localhost:8000` |
+
+**Nota Importante**:
+
+- El archivo `.env` está en `.gitignore` y NO se debe subir al repositorio
+- Usa `.env.example` como referencia para configurar tu entorno local
+- En producción, configura las variables de entorno en tu plataforma de hosting (Vercel, Netlify, etc.)
 
 ## 🤝 Contribuir
 
@@ -207,6 +243,28 @@ VITE_API_URL=http://localhost:3000/api
 - ESLint está configurado con reglas para React Hooks y React Refresh
 - Los estilos CSS están organizados por componente (archivos `.css` junto a cada `.tsx`)
 
+## 🔗 Integración con Backend
+
+Este frontend se conecta con el backend de FastAPI. Asegúrate de:
+
+1. **Tener el backend corriendo** en `http://localhost:8000`
+2. **Poblar la base de datos** ejecutando `python -m app.seed_data` en el backend
+3. **Configurar CORS** en el backend para permitir peticiones desde el frontend
+
+Ver documentación del backend en `../Backend/README.md`
+
+## 🆕 Características Implementadas
+
+✅ Sistema de autenticación con JWT  
+✅ Registro de nuevos usuarios  
+✅ Onboarding con 3 pasos personalizables  
+✅ Carga dinámica de niveles, lenguajes y categorías desde el backend  
+✅ Validación de preferencias antes de acceder al dashboard  
+✅ Rutas protegidas con redirección automática  
+✅ Diseño responsive y moderno  
+✅ Manejo de errores y estados de carga  
+✅ Almacenamiento seguro de tokens en localStorage
+
 ## 📄 Licencia
 
 Este proyecto es parte del curso de Ingeniería en Calidad.
@@ -214,32 +272,3 @@ Este proyecto es parte del curso de Ingeniería en Calidad.
 ---
 
 Desarrollado con ❤️ para Ingeniería en Calidad
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```

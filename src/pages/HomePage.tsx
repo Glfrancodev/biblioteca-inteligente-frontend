@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { preferencesService } from '../services/preferencesService';
 import { Book } from 'lucide-react';
 import './HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Verificar si está autenticado
@@ -15,20 +17,49 @@ const HomePage = () => {
       return;
     }
 
-    // Obtener información del usuario
-    authService.getCurrentUser()
-      .then(user => {
+    // Obtener información del usuario y verificar preferencias
+    const initializeUser = async () => {
+      try {
+        setLoading(true);
+        const [user, preferences] = await Promise.all([
+          authService.getCurrentUser(),
+          preferencesService.getMyPreferences(),
+        ]);
+
         setUserName(user.nombre);
-      })
-      .catch(() => {
+
+        // Si no tiene preferencias, redirigir al onboarding
+        if (!preferences) {
+          navigate('/onboarding');
+        }
+      } catch (error) {
+        console.error('Error al inicializar usuario:', error);
         navigate('/login');
-      });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeUser();
   }, [navigate]);
 
   const handleLogout = () => {
     authService.logout();
     navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="home-page">
+        <div className="home-container">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Cargando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home-page">
