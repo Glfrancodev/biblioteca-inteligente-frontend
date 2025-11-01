@@ -177,10 +177,6 @@ const HomePage = () => {
 
   // Funciones del carrusel de recomendaciones
   const totalRecommendationsPages = Math.ceil(recommendations.length / recommendationsPerPage);
-  const currentRecommendations = recommendations.slice(
-    recommendationsCarouselPage * recommendationsPerPage,
-    (recommendationsCarouselPage + 1) * recommendationsPerPage
-  );
 
   const handleRecommendationsPrevPage = () => {
     setRecommendationsCarouselPage((prev) => (prev > 0 ? prev - 1 : totalRecommendationsPages - 1));
