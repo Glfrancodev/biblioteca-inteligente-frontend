@@ -128,6 +128,14 @@ export interface LibroCatalogo {
     nombre: string;
     idAutor: number;
   }>;
+  categorias?: Array<{
+    idCategoria: number;
+    nombre: string;
+  }>;
+  lenguajes?: Array<{
+    idLenguaje: number;
+    nombre: string;
+  }>;
 }
 
 export interface LibrosResponse {
@@ -194,6 +202,17 @@ export const booksService = {
       return response.data.data || [];
     } catch (error) {
       console.error('Error al obtener libros del autor:', error);
+      return [];
+    }
+  },
+
+  // Obtener recomendaciones
+  getRecommendations: async (limit: number = 10): Promise<LibroCatalogo[]> => {
+    try {
+      const response = await apiClient.get(`/recomendaciones?limit=${limit}`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error al obtener recomendaciones:', error);
       return [];
     }
   },

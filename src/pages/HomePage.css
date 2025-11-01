@@ -427,6 +427,38 @@
   margin: 0;
   color: #64748b;
   font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.view-recommendations-btn {
+  background: #0066CC;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.view-recommendations-btn:hover:not(:disabled) {
+  background: #0052A3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+}
+
+.view-recommendations-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.recommendations-prompt {
+  width: 100%;
 }
 
 /* Catálogo */

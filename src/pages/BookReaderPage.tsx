@@ -43,22 +43,47 @@ const BookReaderPage = () => {
           if (bookDetails) {
             setBook(bookDetails);
             
-            // Cargar PDF directamente desde S3 si está disponible
+            // Cargar PDF: priorizar URL directa, usar proxy como fallback
             if (bookDetails.urlLibro) {
               try {
-                console.log('URL del PDF:', bookDetails.urlLibro);
+                console.log('Usando URL directa del PDF:', bookDetails.urlLibro);
                 console.log('Total de páginas (backend):', bookDetails.totalPaginas);
                 
-                // Guardar la URL para usar con react-pdf
+                // Guardar la URL directa para usar con react-pdf
                 setPdfUrl(bookDetails.urlLibro);
                 
               } catch (error) {
-                console.error('Error preparando PDF:', error);
+                console.error('Error preparando URL directa:', error);
                 setPdfError(true);
               }
             } else {
-              console.log('No hay URL de PDF disponible para este libro');
-              setPdfError(true);
+              // Fallback: descargar a través del proxy cuando no hay URL directa
+              console.log('No hay URL directa, descargando a través del proxy');
+              try {
+                const proxyUrl = `http://localhost:8000/libros/${bookDetails.idLibro}/pdf`;
+                const token = authService.getToken();
+                
+                // Descargar el PDF del proxy y convertirlo para react-pdf
+                const response = await fetch(proxyUrl, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                const pdfObjectUrl = URL.createObjectURL(blob);
+                
+                setPdfUrl(pdfObjectUrl);
+                
+              } catch (error) {
+                console.error('Error descargando PDF del proxy:', error);
+                setPdfError(true);
+              }
             }
 
             // Verificar si ya existe una lectura para este libro

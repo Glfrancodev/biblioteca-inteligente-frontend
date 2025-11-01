@@ -14,6 +14,7 @@ const HomePage = () => {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Estadísticas del backend
   const [stats, setStats] = useState<ReadingStats>({
@@ -32,6 +33,11 @@ const HomePage = () => {
   const [catalogPage, setCatalogPage] = useState(1);
   const [totalCatalogPages, setTotalCatalogPages] = useState(0);
   const catalogLimit = 20; // 5 filas x 4 columnas
+
+  // Recomendaciones
+  const [recommendations, setRecommendations] = useState<LibroCatalogo[]>([]);
+  const [recommendationsLoaded, setRecommendationsLoaded] = useState(false);
+  const recommendationsLimit = 8; // Mostrar 8 recomendaciones (2 filas x 4 columnas)
 
   useEffect(() => {
     // Verificar si está autenticado
@@ -131,6 +137,27 @@ const HomePage = () => {
       loadCatalog();
     }
   }, [loading, catalogPage, catalogLimit]);
+
+  // Función para cargar recomendaciones manualmente
+  const handleViewRecommendations = async () => {
+    if (!authService.isAuthenticated()) return;
+    
+    try {
+      setLoadingRecommendations(true);
+      const recommendedBooks = await booksService.getRecommendations(recommendationsLimit);
+      console.log('Recomendaciones cargadas:', {
+        libros: recommendedBooks.length
+      });
+      setRecommendations(recommendedBooks);
+      setRecommendationsLoaded(true);
+    } catch (error) {
+      console.error('Error al cargar recomendaciones:', error);
+      setRecommendations([]); // Fallback a array vacío
+      setRecommendationsLoaded(true); // Marcar como cargado aunque haya error
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   const totalPages = Math.ceil(booksInProgress.length / booksPerPage);
   const currentBooks = booksInProgress.slice(
@@ -333,10 +360,79 @@ const HomePage = () => {
         {/* Recomendaciones */}
         <section className="recommendations-section">
           <h2 className="section-title">Recomendaciones</h2>
-          <div className="coming-soon">
-            <Construction size={48} strokeWidth={1.5} />
-            <p className="coming-soon-text">Funcionalidad en desarrollo</p>
-          </div>
+          
+          {!recommendationsLoaded ? (
+            <div className="recommendations-prompt">
+              <div className="coming-soon">
+                <BookMarked size={48} strokeWidth={1.5} />
+                <p className="coming-soon-text">Descubre libros recomendados para ti</p>
+                <button 
+                  className="view-recommendations-btn"
+                  onClick={handleViewRecommendations}
+                  disabled={loadingRecommendations}
+                >
+                  {loadingRecommendations ? 'Cargando...' : 'Ver Recomendaciones'}
+                </button>
+              </div>
+            </div>
+          ) : loadingRecommendations ? (
+            <div className="catalog-loading">
+              <div className="spinner"></div>
+              <p>Cargando recomendaciones...</p>
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="catalog-grid">
+              {recommendations.map((book) => (
+                <div
+                  key={book.idLibro}
+                  className="book-card"
+                  onClick={() => navigate(`/book/${book.idLibro}`)}
+                >
+                  <div className="book-cover">
+                    {book.urlPortada ? (
+                      <img 
+                        src={book.urlPortada} 
+                        alt={book.titulo}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className="book-placeholder">
+                      <Book size={32} />
+                    </div>
+                  </div>
+                  <div className="book-info">
+                    <h3 className="book-title" title={book.titulo}>{book.titulo}</h3>
+                    <p className="book-authors">
+                      {book.autores?.map(author => author.nombre).join(', ') || 'Autor desconocido'}
+                    </p>
+                    <div className="book-meta">
+                      <span className="book-pages">{book.totalPaginas} páginas</span>
+                      {book.categorias && book.categorias.length > 0 && (
+                        <span className="book-category">{book.categorias[0].nombre}</span>
+                      )}
+                      {book.lenguajes && book.lenguajes.length > 0 && (
+                        <span className="book-language">{book.lenguajes[0].nombre}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="coming-soon">
+              <Construction size={48} strokeWidth={1.5} />
+              <p className="coming-soon-text">No hay recomendaciones disponibles</p>
+              <button 
+                className="view-recommendations-btn"
+                onClick={handleViewRecommendations}
+              >
+                Intentar de nuevo
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Catálogo de Libros */}
