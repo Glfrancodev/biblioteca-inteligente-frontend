@@ -20,10 +20,8 @@ const BookReaderPage = () => {
   const [lecturaId, setLecturaId] = useState<number | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pdfError, setPdfError] = useState(false);
-  const [pdfLoaded, setPdfLoaded] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const hasCreatedReading = useRef(false);
-  const pdfDataRef = useRef<Uint8Array | null>(null);
-  const pdfFileObjectRef = useRef<{ data: Uint8Array } | null>(null);
 
   const totalPages = numPages || book?.totalPaginas || 100;
 
@@ -45,35 +43,22 @@ const BookReaderPage = () => {
           if (bookDetails) {
             setBook(bookDetails);
             
-            // Cargar PDF si está disponible
-            if (bookDetails.url_firmada || bookDetails.urlLibro) {
+            // Cargar PDF directamente desde S3 si está disponible
+            if (bookDetails.urlLibro) {
               try {
-                const pdfProxyUrl = `http://localhost:8000/libros/${bookDetails.idLibro}/pdf`;
-                const token = authService.getToken();
+                console.log('URL del PDF:', bookDetails.urlLibro);
+                console.log('Total de páginas (backend):', bookDetails.totalPaginas);
                 
-                const response = await fetch(pdfProxyUrl, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                });
+                // Guardar la URL para usar con react-pdf
+                setPdfUrl(bookDetails.urlLibro);
                 
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const arrayBuffer = await response.arrayBuffer();
-                
-                if (arrayBuffer.byteLength === 0) {
-                  throw new Error('El PDF está vacío');
-                }
-                
-                pdfDataRef.current = new Uint8Array(arrayBuffer);
-                pdfFileObjectRef.current = { data: pdfDataRef.current };
-                setPdfLoaded(true);
               } catch (error) {
-                console.error('Error al cargar PDF:', error);
+                console.error('Error preparando PDF:', error);
                 setPdfError(true);
               }
+            } else {
+              console.log('No hay URL de PDF disponible para este libro');
+              setPdfError(true);
             }
 
             // Verificar si ya existe una lectura para este libro
@@ -130,6 +115,26 @@ const BookReaderPage = () => {
       }
     };
   }, [lecturaId, currentPage, totalPages]);
+
+  // Función para manejar cuando el PDF se carga exitosamente
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    console.log(`PDF cargado exitosamente. Páginas detectadas: ${numPages}`);
+    console.log(`Páginas en el backend: ${book?.totalPaginas}`);
+    
+    // Usar el número de páginas detectado del PDF real
+    setNumPages(numPages);
+    
+    // Comparar con el backend (opcional, para debug)
+    if (book?.totalPaginas && book.totalPaginas !== numPages) {
+      console.warn(`Discrepancia de páginas: Backend=${book.totalPaginas}, PDF real=${numPages}`);
+    }
+  };
+
+  // Función para manejar errores de carga del PDF
+  const onDocumentLoadError = (error: Error) => {
+    console.error('Error cargando PDF:', error);
+    setPdfError(true);
+  };
 
   const handleLogout = () => {
     authService.logout();
@@ -273,31 +278,21 @@ const BookReaderPage = () => {
       {/* Reader Content */}
       <main className="reader-main">
         <div className="reader-container">
-          {(book.url_firmada || book.urlLibro) ? (
+          {pdfUrl ? (
             pdfError ? (
               <div className="pdf-error">
                 <h3>⚠️ Error al cargar PDF</h3>
                 <p>No se pudo cargar el archivo PDF. Por favor, intenta de nuevo más tarde.</p>
+                <p><small>URL: {pdfUrl}</small></p>
                 <button onClick={() => window.location.reload()} className="retry-button">
                   Reintentar
                 </button>
               </div>
-            ) : !pdfLoaded || !pdfFileObjectRef.current ? (
-              <div className="pdf-loading">
-                <div className="spinner"></div>
-                <p>Descargando PDF...</p>
-              </div>
             ) : (
               <Document
-                file={pdfFileObjectRef.current}
-                onLoadSuccess={({ numPages }) => {
-                  setNumPages(numPages);
-                  setPdfError(false);
-                }}
-                onLoadError={(error) => {
-                  console.error('Error al renderizar PDF:', error);
-                  setPdfError(true);
-                }}
+                file={pdfUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
                 loading={
                   <div className="pdf-loading">
                     <div className="spinner"></div>
