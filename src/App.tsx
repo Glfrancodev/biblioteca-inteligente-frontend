@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/HomePage'
 import OnboardingPage from './pages/OnboardingPage'
+import BookDetailPage from './pages/BookDetailPage'
+import BookReaderPage from './pages/BookReaderPage'
 import { authService } from './services/authService'
 import './App.css'
 
@@ -33,6 +35,22 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/book/:bookId" 
+          element={
+            <ProtectedRoute>
+              <BookDetailPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/reader/:bookId" 
+          element={
+            <ProtectedRoute>
+              <BookReaderPage />
             </ProtectedRoute>
           } 
         />

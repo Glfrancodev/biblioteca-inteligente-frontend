@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { preferencesService } from '../services/preferencesService';
-import { readingService } from '../services/readingService';
-import type { ReadingStats, Lectura } from '../services/readingService';
-import { Book, Globe, Settings, LogOut, BookOpen, BookMarked, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { readingService, booksService } from '../services/readingService';
+import type { ReadingStats, Lectura, LibroCatalogo } from '../services/readingService';
+import { Book, Globe, Settings, LogOut, BookOpen, BookMarked, FileText, ChevronLeft, ChevronRight, Construction } from 'lucide-react';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -13,6 +13,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
 
   // Estadísticas del backend
   const [stats, setStats] = useState<ReadingStats>({
@@ -25,6 +26,12 @@ const HomePage = () => {
   const [booksInProgress, setBooksInProgress] = useState<Lectura[]>([]);
   const [carouselPage, setCarouselPage] = useState(0);
   const booksPerPage = 5;
+
+  // Catálogo de libros
+  const [catalog, setCatalog] = useState<LibroCatalogo[]>([]);
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [totalCatalogPages, setTotalCatalogPages] = useState(0);
+  const catalogLimit = 20; // 5 filas x 4 columnas
 
   useEffect(() => {
     // Verificar si está autenticado
@@ -97,6 +104,34 @@ const HomePage = () => {
     }
   }, [loading]);
 
+  // Cargar catálogo de libros
+  useEffect(() => {
+    const loadCatalog = async () => {
+      if (!authService.isAuthenticated()) return;
+      
+      try {
+        setLoadingCatalog(true);
+        const response = await booksService.getBooks(catalogPage, catalogLimit);
+        console.log('Catálogo cargado:', {
+          libros: response.data.length,
+          totalLibros: response.count,
+          paginaActual: response.page,
+          totalPaginas: response.totalPages
+        });
+        setCatalog(response.data);
+        setTotalCatalogPages(response.totalPages);
+      } catch (error) {
+        console.error('Error al cargar catálogo:', error);
+      } finally {
+        setLoadingCatalog(false);
+      }
+    };
+
+    if (!loading) {
+      loadCatalog();
+    }
+  }, [loading, catalogPage, catalogLimit]);
+
   const totalPages = Math.ceil(booksInProgress.length / booksPerPage);
   const currentBooks = booksInProgress.slice(
     carouselPage * booksPerPage,
@@ -109,6 +144,15 @@ const HomePage = () => {
 
   const handleNextPage = () => {
     setCarouselPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0));
+  };
+
+  const handleCatalogPageChange = (newPage: number) => {
+    setCatalogPage(newPage);
+    // Scroll al inicio del catálogo cuando cambia la página
+    const catalogSection = document.querySelector('.catalog-section');
+    if (catalogSection) {
+      catalogSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleLogout = () => {
@@ -222,7 +266,11 @@ const HomePage = () => {
               <div className="carousel-content">
                 <div className="books-grid">
                   {currentBooks.map((lectura) => (
-                    <div key={lectura.idLectura} className="book-card">
+                    <div 
+                      key={lectura.idLectura} 
+                      className="book-card"
+                      onClick={() => navigate(`/book/${lectura.idLibro}`)}
+                    >
                       <div className="book-cover">
                         {lectura.urlPortada ? (
                           <img 
@@ -279,6 +327,112 @@ const HomePage = () => {
                 </>
               )}
             </div>
+          )}
+        </section>
+
+        {/* Recomendaciones */}
+        <section className="recommendations-section">
+          <h2 className="section-title">Recomendaciones</h2>
+          <div className="coming-soon">
+            <Construction size={48} strokeWidth={1.5} />
+            <p className="coming-soon-text">Funcionalidad en desarrollo</p>
+          </div>
+        </section>
+
+        {/* Catálogo de Libros */}
+        <section className="catalog-section">
+          <h2 className="section-title">Catálogo de Libros</h2>
+          
+          {loadingCatalog ? (
+            <div className="catalog-loading">
+              <div className="spinner"></div>
+              <p>Cargando catálogo...</p>
+            </div>
+          ) : catalog.length === 0 ? (
+            <div className="catalog-empty">
+              <Book size={48} strokeWidth={1.5} />
+              <p className="empty-message">No hay libros disponibles en el catálogo</p>
+            </div>
+          ) : (
+            <>
+              <div className="catalog-grid">
+                {catalog.map((libro) => (
+                  <div 
+                    key={libro.idLibro} 
+                    className="catalog-card"
+                    onClick={() => navigate(`/book/${libro.idLibro}`)}
+                  >
+                    <div className="catalog-cover">
+                      {libro.urlPortada ? (
+                        <img src={libro.urlPortada} alt={libro.titulo} />
+                      ) : (
+                        <div className="catalog-cover-placeholder">
+                          <Book size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="catalog-info">
+                      <h3 className="catalog-title">{libro.titulo}</h3>
+                      <p className="catalog-author">
+                        {libro.autores && libro.autores.length > 0
+                          ? libro.autores.map(a => a.nombre).join(', ')
+                          : 'Autor desconocido'}
+                      </p>
+                      {libro.totalPaginas && (
+                        <p className="catalog-pages">{libro.totalPaginas} páginas</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginación */}
+              {(totalCatalogPages > 1 || catalog.length >= catalogLimit) && (
+                <div className="pagination">
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handleCatalogPageChange(Math.max(1, catalogPage - 1))}
+                    disabled={catalogPage === 1}
+                  >
+                    <ChevronLeft size={20} />
+                    Anterior
+                  </button>
+
+                  <div className="pagination-numbers">
+                    {Array.from({ length: totalCatalogPages }, (_, i) => i + 1).map((page) => {
+                      // Mostrar solo algunas páginas alrededor de la actual
+                      if (
+                        page === 1 ||
+                        page === totalCatalogPages ||
+                        (page >= catalogPage - 1 && page <= catalogPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={page}
+                            className={`pagination-number ${page === catalogPage ? 'active' : ''}`}
+                            onClick={() => handleCatalogPageChange(page)}
+                          >
+                            {page}
+                          </button>
+                        );
+                      } else if (page === catalogPage - 2 || page === catalogPage + 2) {
+                        return <span key={page} className="pagination-ellipsis">...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handleCatalogPageChange(Math.min(totalCatalogPages, catalogPage + 1))}
+                    disabled={catalogPage === totalCatalogPages}
+                  >
+                    Siguiente
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

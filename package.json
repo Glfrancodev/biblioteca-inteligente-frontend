@@ -12,8 +12,10 @@
   "dependencies": {
     "axios": "^1.13.1",
     "lucide-react": "^0.552.0",
+    "pdfjs-dist": "^5.4.296",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-pdf": "^10.2.0",
     "react-router-dom": "^7.9.5"
   },
   "devDependencies": {
