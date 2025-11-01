@@ -797,3 +797,274 @@
     display: none;
   }
 }
+
+/* Estilos para el carrusel de recomendaciones */
+.recommendations-carousel {
+  position: relative;
+  padding: 0 60px;
+  margin: 2rem 0;
+}
+
+.recommendations-carousel-container {
+  overflow: hidden;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+}
+
+.recommendations-carousel-track {
+  display: flex;
+  width: 100%;
+}
+
+.recommendations-carousel-page {
+  min-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.recommendation-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0066CC, #4F46E5);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.recommendation-card:hover::before {
+  transform: scaleX(1);
+}
+
+.recommendation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: #0066CC;
+}
+
+.recommendation-cover {
+  width: 100%;
+  height: 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  margin-bottom: 1rem;
+}
+
+.recommendation-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.recommendation-card:hover .recommendation-cover img {
+  transform: scale(1.05);
+}
+
+
+
+.recommendation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recommendation-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recommendation-authors {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recommendation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.recommendation-pages,
+.recommendation-category,
+.recommendation-language {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.recommendation-category {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.recommendation-language {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.recommendations-prev,
+.recommendations-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recommendations-prev {
+  left: 0;
+}
+
+.recommendations-next {
+  right: 0;
+}
+
+.recommendations-prev:hover,
+.recommendations-next:hover {
+  background: #0066CC;
+  border-color: #0066CC;
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.recommendations-prev:disabled,
+.recommendations-next:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.recommendations-prev:disabled:hover,
+.recommendations-next:disabled:hover {
+  transform: translateY(-50%);
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.recommendations-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.recommendations-carousel-dots .carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recommendations-carousel-dots .carousel-dot.active {
+  background: #0066CC;
+  transform: scale(1.2);
+}
+
+.recommendations-carousel-dots .carousel-dot:hover {
+  background: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .recommendations-carousel-page {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .recommendations-carousel {
+    padding: 0 20px;
+  }
+
+  .recommendations-carousel-page {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .recommendation-card {
+    padding: 1rem;
+  }
+
+  .recommendation-cover {
+    height: 180px;
+  }
+
+  .recommendations-prev,
+  .recommendations-next {
+    width: 40px;
+    height: 40px;
+  }
+
+  .recommendations-prev {
+    left: -10px;
+  }
+
+  .recommendations-next {
+    right: -10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .recommendations-carousel {
+    padding: 0 10px;
+  }
+
+  .recommendations-carousel-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recommendation-card {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}

@@ -37,7 +37,9 @@ const HomePage = () => {
   // Recomendaciones
   const [recommendations, setRecommendations] = useState<LibroCatalogo[]>([]);
   const [recommendationsLoaded, setRecommendationsLoaded] = useState(false);
-  const recommendationsLimit = 8; // Mostrar 8 recomendaciones (2 filas x 4 columnas)
+  const [recommendationsCarouselPage, setRecommendationsCarouselPage] = useState(0);
+  const recommendationsLimit = 5; // Solo pedir 5 recomendaciones máximo
+  const recommendationsPerPage = 3; // Mostrar 3 recomendaciones por página
 
   useEffect(() => {
     // Verificar si está autenticado
@@ -171,6 +173,21 @@ const HomePage = () => {
 
   const handleNextPage = () => {
     setCarouselPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0));
+  };
+
+  // Funciones del carrusel de recomendaciones
+  const totalRecommendationsPages = Math.ceil(recommendations.length / recommendationsPerPage);
+  const currentRecommendations = recommendations.slice(
+    recommendationsCarouselPage * recommendationsPerPage,
+    (recommendationsCarouselPage + 1) * recommendationsPerPage
+  );
+
+  const handleRecommendationsPrevPage = () => {
+    setRecommendationsCarouselPage((prev) => (prev > 0 ? prev - 1 : totalRecommendationsPages - 1));
+  };
+
+  const handleRecommendationsNextPage = () => {
+    setRecommendationsCarouselPage((prev) => (prev < totalRecommendationsPages - 1 ? prev + 1 : 0));
   };
 
   const handleCatalogPageChange = (newPage: number) => {
@@ -359,7 +376,7 @@ const HomePage = () => {
 
         {/* Recomendaciones */}
         <section className="recommendations-section">
-          <h2 className="section-title">Recomendaciones</h2>
+          <h2 className="section-title">Recomendaciones para ti</h2>
           
           {!recommendationsLoaded ? (
             <div className="recommendations-prompt">
@@ -381,45 +398,87 @@ const HomePage = () => {
               <p>Cargando recomendaciones...</p>
             </div>
           ) : recommendations.length > 0 ? (
-            <div className="catalog-grid">
-              {recommendations.map((book) => (
-                <div
-                  key={book.idLibro}
-                  className="book-card"
-                  onClick={() => navigate(`/book/${book.idLibro}`)}
+            <div className="recommendations-carousel">
+              <button 
+                className="carousel-btn carousel-btn-prev recommendations-prev" 
+                onClick={handleRecommendationsPrevPage}
+                aria-label="Recomendaciones anteriores"
+                disabled={totalRecommendationsPages <= 1}
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              <div className="recommendations-carousel-container">
+                <div 
+                  className="recommendations-carousel-track"
+                  style={{
+                    transform: `translateX(-${recommendationsCarouselPage * 100}%)`,
+                    transition: 'transform 0.3s ease-in-out'
+                  }}
                 >
-                  <div className="book-cover">
-                    {book.urlPortada ? (
-                      <img 
-                        src={book.urlPortada} 
-                        alt={book.titulo}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <div className="book-placeholder">
-                      <Book size={32} />
+                  {Array.from({ length: totalRecommendationsPages }).map((_, pageIndex) => (
+                    <div key={pageIndex} className="recommendations-carousel-page">
+                      {recommendations
+                        .slice(pageIndex * recommendationsPerPage, (pageIndex + 1) * recommendationsPerPage)
+                        .map((book) => (
+                          <div
+                            key={book.idLibro}
+                            className="recommendation-card"
+                            onClick={() => navigate(`/book/${book.idLibro}`)}
+                          >
+                            <div className="recommendation-cover">
+                              {book.urlPortada && (
+                                <img 
+                                  src={book.urlPortada} 
+                                  alt={book.titulo}
+                                />
+                              )}
+                            </div>
+                            <div className="recommendation-info">
+                              <h3 className="recommendation-title" title={book.titulo}>
+                                {book.titulo}
+                              </h3>
+                              <p className="recommendation-authors">
+                                {book.autores?.map(author => author.nombre).join(', ') || 'Autor desconocido'}
+                              </p>
+                              <div className="recommendation-meta">
+                                <span className="recommendation-pages">{book.totalPaginas} páginas</span>
+                                {book.categorias && book.categorias.length > 0 && (
+                                  <span className="recommendation-category">{book.categorias[0].nombre}</span>
+                                )}
+                                {book.lenguajes && book.lenguajes.length > 0 && (
+                                  <span className="recommendation-language">{book.lenguajes[0].nombre}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  </div>
-                  <div className="book-info">
-                    <h3 className="book-title" title={book.titulo}>{book.titulo}</h3>
-                    <p className="book-authors">
-                      {book.autores?.map(author => author.nombre).join(', ') || 'Autor desconocido'}
-                    </p>
-                    <div className="book-meta">
-                      <span className="book-pages">{book.totalPaginas} páginas</span>
-                      {book.categorias && book.categorias.length > 0 && (
-                        <span className="book-category">{book.categorias[0].nombre}</span>
-                      )}
-                      {book.lenguajes && book.lenguajes.length > 0 && (
-                        <span className="book-language">{book.lenguajes[0].nombre}</span>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <button 
+                className="carousel-btn carousel-btn-next recommendations-next" 
+                onClick={handleRecommendationsNextPage}
+                aria-label="Próximas recomendaciones"
+                disabled={totalRecommendationsPages <= 1}
+              >
+                <ChevronRight size={24} />
+              </button>
+
+              {totalRecommendationsPages > 1 && (
+                <div className="recommendations-carousel-dots">
+                  {Array.from({ length: totalRecommendationsPages }).map((_, index) => (
+                    <button
+                      key={index}
+                      className={`carousel-dot ${index === recommendationsCarouselPage ? 'active' : ''}`}
+                      onClick={() => setRecommendationsCarouselPage(index)}
+                      aria-label={`Ir a recomendaciones página ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="coming-soon">
