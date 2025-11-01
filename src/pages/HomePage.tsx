@@ -214,7 +214,7 @@ const HomePage = () => {
           <button className="header-icon-btn" title="Recomendaciones">
             <Globe size={20} />
           </button>
-          <button className="header-icon-btn" title="Configuración">
+          <button className="header-icon-btn" onClick={() => navigate('/settings')} title="Configuración">
             <Settings size={20} />
           </button>
           <button className="header-icon-btn logout-btn" onClick={handleLogout} title="Cerrar Sesión">

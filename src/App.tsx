@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage'
 import OnboardingPage from './pages/OnboardingPage'
 import BookDetailPage from './pages/BookDetailPage'
 import BookReaderPage from './pages/BookReaderPage'
+import SettingsPage from './pages/SettingsPage'
 import { authService } from './services/authService'
 import './App.css'
 
@@ -51,6 +52,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BookReaderPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           } 
         />
