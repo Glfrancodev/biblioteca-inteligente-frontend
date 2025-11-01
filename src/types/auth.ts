@@ -38,6 +38,7 @@ export interface ApiResponse<T> {
   data: T;
   message: string;
   timestamp: string;
+  count?: number; // Cantidad de elementos devueltos en arrays
 }
 
 export interface ApiError {
